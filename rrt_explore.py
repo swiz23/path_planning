@@ -21,10 +21,9 @@ def main():
 
     for i in range(num_verts):
         # get random point in plot and make sure it's not already in the tree
-        q_rand = list(np.random.random_integers(0, map_size, 2))
-        if q_rand in tree:
-            while q_rand in tree:
-                q_rand = list(np.random.random_integers(0, map_size, 2))
+        q_rand = list(np.random.random(2)*map_size)
+        while q_rand in tree:
+            q_rand = list(np.random.random(2)*map_size)
         # find nearest vertex in the tree to the random point
         q_near = nearest_vertex(q_rand, tree, max_dist)
         # find point along the line from q_near to q_rand that is inc_dist away
@@ -65,7 +64,7 @@ def new_config(q_near, q_rand, inc_dist):
         v_unit = [v[0]/v_mag, v[1]/v_mag]
         q_new_x = q_near[0] + v_unit[0]*inc_dist
         q_new_y = q_near[1] + v_unit[1]*inc_dist
-        return [int(round(q_new_x)), int(round(q_new_y))]
+        return [q_new_x, q_new_y]
 
 if __name__=='__main__':
     main()
