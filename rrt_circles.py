@@ -8,8 +8,8 @@ import matplotlib.patches as patches
 def main():
     map_size = input("Enter map size (map will be n x n): ")
     inc_dist = input("Enter incremental distance: ")
-    tolerance = input("Enter tolerance at goal: ")
-    world = generate_circles(10, 8, 3, map_size)
+    alg = input("Enter algorithm ('custom'/'online'): ")
+    world = generate_circles(10, .08*map_size, 0.03*map_size, map_size)
     max_dist = map_size * np.sqrt(2)
     np.random.seed(1)
 
@@ -53,18 +53,26 @@ def main():
     codes = []
     cntr = 0
     keep_iterating = True
+    goal_reached = False
     while keep_iterating:
-        cntr+=1
         collision = True
+        # check to see if it's a clear path to the goal
+        if no_collision(tree[-1], q_goal, world, alg):
+            collision = False
+            goal_reached = True
+            q_new = q_goal
+            q_near = tree[-1]
+        else:
+            cntr+=1
         while collision:
-            # get random point in plot and make sure it's not already in the tree
+            # get random point in plot
             q_rand = list(np.random.random(2)*map_size)
             # find nearest vertex in the tree to the random point
             q_near = nearest_vertex(q_rand, tree, max_dist)
-            # find point along the line from q_near to q_rand that is inc_dist away
+            # find point along the line from q_near to q_rand that is at most inc_dist away
             q_new = new_config(q_near, q_rand, inc_dist)
             # check to see if the new point collides with a circle
-            if no_collision(q_near, q_new, world):
+            if no_collision(q_near, q_new, world, alg):
                 collision = False
 
         tree.append(q_new)
@@ -80,11 +88,11 @@ def main():
         plt.draw()
         fig.canvas.flush_events()
         time.sleep(0.0005)
-        if abs(q_new[0] - q_goal[0]) < tolerance and abs(q_new[1] - q_goal[1]) < tolerance:
+        if goal_reached:
             keep_iterating = False
 
-    print("Goal achieved at " + str(cntr) + " iterations at point " + str(q_new) + ".")
-    q_curr = q_new
+    print("Goal achieved in " + str(cntr) + " iterations.")
+    q_curr = q_goal
     verts_path = []
     codes_path = []
     while q_curr != q_init:
@@ -105,7 +113,7 @@ def main():
 
 def nearest_vertex(q_rand, tree, max_dist):
     min_dist = max_dist
-    q_near = [0,0]
+    q_near = None
     for v in tree:
         dist = distance(v, q_rand)
         if dist < min_dist:
@@ -125,16 +133,59 @@ def new_config(q_near, q_rand, inc_dist):
         q_new_y = q_near[1] + v_unit[1]*inc_dist
         return [q_new_x, q_new_y]
 
-def no_collision(q_near, q_new, world):
-    for circ in world:
-        u = ((circ[1] - q_near[0]) * (q_new[0] - q_near[0]) + (circ[2] - q_near[1]) * (q_new[1] - q_near[1])) / distance(q_near, q_new)**2
-
-        x_perp = q_near[0] + u * (q_new[0] - q_near[0])
-        y_perp = q_near[1] + u * (q_new[1] - q_near[1])
-        dist = distance(circ[1:],[x_perp, y_perp])
-        if dist <= circ[0]:
+def no_collision(q_near, q_new, world, alg):
+    # This algorithm was designed using logic
+    if alg == "custom":
+        # point is already in the tree. also, if this is true, there will be a divide by zero error in the next step
+        if q_new == q_near:
             return False
-    return True
+        # find slope of line created between q_near and q_new
+        m = (q_new[1] - q_near[1]) / float(q_new[0] - q_near[0])
+        # a line is y = mx+b so find b by solving b = y - mx
+        b = q_new[1] - m*q_new[0]
+        # The closest distance to a line is perpendicular to it. So, that's the negative reciprocal of the slope
+        m_perp = -1/m
+        # find b of this perpendicular line by plugging in the center of each circle.
+        for circ in world:
+            b_perp = circ[2] - m_perp*circ[1]
+            # find the point where the two lines intersect => m*x + b = m_perp*x + b_perp
+            # This equation reduces to x(m - m_perp) = b_perp - b
+            # Finally, solve for x to get x = (b_perp - b) / (m - m_perp)
+            x_perp = (b_perp - b) / (m - m_perp)
+            # Find y_perp by arbitrarily plugging x_perp into the line equation between q_new and q_near
+            y_perp = m*x_perp + b
+            # Now check to see if the intersection occurs outside the line segment
+            lower_x = min(q_near[0], q_new[0])
+            upper_x = max(q_near[0], q_new[0])
+            lower_y = min(q_near[1], q_new[1])
+            upper_y = max(q_near[1], q_new[1])
+            if (x_perp < lower_x or x_perp > upper_x) or (y_perp < lower_y or y_perp > upper_y):
+                # if it does, then the closest point is q_new, so check that it doesn't overlap any circle
+                dist = distance(circ[1:], q_new)
+            else:
+                # find distance between the circle center and the point of intersection
+                dist = distance(circ[1:], [x_perp, y_perp])
+            # check to see if distance is less than radius of circle
+            if dist <= circ[0]:
+                return False
+        # point must be in the clear so return True
+        return True
+
+    # This algorithm was designed using this page: http://paulbourke.net/geometry/pointlineplane/
+    if alg == "online":
+        if q_near == q_new:
+            return False
+        for circ in world:
+            u = ((circ[1] - q_near[0]) * (q_new[0] - q_near[0]) + (circ[2] - q_near[1]) * (q_new[1] - q_near[1])) / distance(q_near, q_new)**2
+            if u < 0 or u > 1:
+                dist = distance(circ[1:], q_new)
+            else:
+                x_perp = q_near[0] + u * (q_new[0] - q_near[0])
+                y_perp = q_near[1] + u * (q_new[1] - q_near[1])
+                dist = distance(circ[1:],[x_perp, y_perp])
+            if dist <= circ[0]:
+                return False
+        return True
 
 def vacant_space(q_pnt, world):
     for circ in world:
@@ -156,6 +207,7 @@ def generate_circles(num, mean, std, map_size):
     circle radii and the second two columns are the circle x and y locations.
     """
     circles = np.zeros((num,3))
+    np.random.seed(1)
     # generate circle locations using a uniform distribution:
     circles[:,1:] = np.random.uniform(mean, map_size-mean, size=(num,2))
     # generate radii using a normal distribution:

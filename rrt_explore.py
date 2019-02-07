@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
+import time
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
@@ -19,13 +20,23 @@ def main():
     verts = []
     codes = []
 
+    # make a plot and show circles
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_xlim([0, map_size])
+    ax.set_ylim([0, map_size])
+    ax.set_title('RRT 0 Iterations')
+    plt.show(block=False)
+
     for i in range(num_verts):
-        # get random point in plot and make sure it's not already in the tree
-        q_rand = list(np.random.random(2)*map_size)
-        while q_rand in tree:
+        same = True
+        while same:
+            # get random point in plot
             q_rand = list(np.random.random(2)*map_size)
-        # find nearest vertex in the tree to the random point
-        q_near = nearest_vertex(q_rand, tree, max_dist)
+            # find nearest vertex in the tree to the random point
+            q_near = nearest_vertex(q_rand, tree, max_dist)
+            if q_rand != q_near:
+                same = False
         # find point along the line from q_near to q_rand that is inc_dist away
         q_new = new_config(q_near, q_rand, inc_dist)
         tree.append(q_new)
@@ -33,15 +44,16 @@ def main():
         verts.append(q_new)
         codes.append(Path.MOVETO)
         codes.append(Path.LINETO)
-    # make a plot and show RRT
-    fig = plt.figure()
-    path = Path(verts, codes)
-    patch = patches.PathPatch(path)
-    ax = fig.add_subplot(111)
-    ax.add_patch(patch)
-    ax.set_xlim([0, map_size])
-    ax.set_ylim([0, map_size])
-    ax.set_title('RRT ' + str(num_verts) + ' Iterations')
+
+        # make a plot and show RRT
+        path = Path(verts[-2:], codes[-2:])
+        patch = patches.PathPatch(path)
+        ax.add_patch(patch)
+        ax.set_title('RRT ' + str(i+1) + ' Iterations')
+        plt.draw()
+        fig.canvas.flush_events()
+        time.sleep(0.0005)
+    print("Done")
     plt.show()
 
 def nearest_vertex(q_rand, tree, max_dist):
