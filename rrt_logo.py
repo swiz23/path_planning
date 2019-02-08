@@ -28,8 +28,8 @@ def main():
     print("Look at plot to find an obstacle-free starting and ending position.")
     collision = True
     while collision:
-        q_init_x = input("Enter x coordinate of q_init: ")
-        q_init_y = input("Enter y coordinate of q_init: ")
+        q_init_x = input("Enter x coordinate (integer) of q_init: ")
+        q_init_y = input("Enter y coordinate (integer) of q_init: ")
         q_init = [q_init_x, q_init_y]
         if vacant_space(q_init, world):
             collision = False
@@ -37,8 +37,8 @@ def main():
     plt.draw()
     collision = True
     while collision:
-        q_goal_x = input("Enter x coordinate of q_goal: ")
-        q_goal_y = input("Enter y coordinate of q_qoal: ")
+        q_goal_x = input("Enter x coordinate (integer) of q_goal: ")
+        q_goal_y = input("Enter y coordinate (integer) of q_qoal: ")
         q_goal = [q_goal_x, q_goal_y]
         if vacant_space(q_goal, world):
             collision = False
@@ -63,7 +63,7 @@ def main():
             cntr+=1
         while collision:
             # get random point in plot
-            q_rand = list((float(np.random.random(1)*Xmax), float(np.random.random(1)*Ymax)))
+            q_rand = list((int(np.random.randint(0,Xmax,1)), int(np.random.randint(0,Ymax,1))))
             # find nearest vertex in the tree to the random point
             q_near = nearest_vertex(q_rand, tree, max_dist)
             # find point along the line from q_near to q_rand that is at most inc_dist away
@@ -84,7 +84,7 @@ def main():
         ax.set_title('RRT ' + str(cntr) + ' Iterations')
         plt.draw()
         fig.canvas.flush_events()
-        time.sleep(0.0005)
+        time.sleep(0.05)
         if goal_reached:
             keep_iterating = False
 
@@ -128,16 +128,28 @@ def new_config(q_near, q_rand, inc_dist):
         v_unit = [v[0]/v_mag, v[1]/v_mag]
         q_new_x = q_near[0] + v_unit[0]*inc_dist
         q_new_y = q_near[1] + v_unit[1]*inc_dist
-        return [q_new_x, q_new_y]
+        return [int(round(q_new_x)), int(round(q_new_y))]
 
 def no_collision(q_near, q_new, world):
-    if world[q_new[1], q_new[0]] == 255 or q_near == q_new:
+
+    if world[q_new[1], q_new[0]] == 255 or q_near[0] == q_new[0]:
         return False
+    m = (q_new[1] - q_near[1]) / float(q_new[0] - q_near[0])
+    if m < -1 or m > 1:
+        return False
+    b = q_near[1] - m*q_near[0]
+    x_low = int(round(min(q_near[0], q_new[0])))
+    x_high = int(round(max(q_near[0], q_new[0])))
+    for i in range(x_low, x_high):
+        y = int(round(m*i + b))
+        if world[y, i] == 255:
+            return False
+
     return True
 
 
 def vacant_space(q_pnt, world):
-    if world[q_pnt[1],q_pnt[0]] == 255:
+    if world[q_pnt[1], q_pnt[0]] == 255:
         print("That point lies within an obstacle. Please choose a different one.")
         return False
     return True
