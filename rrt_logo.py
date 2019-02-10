@@ -6,6 +6,11 @@ import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
 
+# To program this algorithm, the following resources were used:
+# https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+# https://www.youtube.com/watch?v=U3Vw0XhkD9M
+# https://www.youtube.com/watch?v=76gp2IAazV4
+
 def main():
     FNAME = "N_map.png"
     world = imread(FNAME, mode='L')
