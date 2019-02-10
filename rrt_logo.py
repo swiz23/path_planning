@@ -177,7 +177,7 @@ def plotLineLow(x0, y0, x1, y1, world):
     for x in range(x0, x1):
         if world[y, x] == 255:
             return False
-        if D >= 0:
+        if D > 0:
             y = y + yi
             D = D - 2*dx
         D = D + 2*dy
@@ -196,7 +196,7 @@ def plotLineHigh(x0, y0, x1, y1, world):
     for y in range(y0, y1):
         if world[y, x] == 255:
             return False
-        if D >= 0:
+        if D > 0:
             x = x + xi
             D = D - 2*dy
         D = D + 2*dx
