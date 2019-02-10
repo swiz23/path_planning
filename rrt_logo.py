@@ -15,10 +15,12 @@ def main():
     Ymax = world.shape[1]
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    ax.set_xlim([-0.5, Xmax-0.5])
+    ax.set_ylim([-0.5, Ymax-0.5])
     ax.set_title('RRT 0 Iterations')
 
-    plt.imshow(world, cmap=plt.cm.binary, interpolation='nearest', origin='lower',
-              extent=[0,Xmax,0,Ymax])
+    plt.imshow(world, cmap=plt.cm.Purples, interpolation='nearest', origin='lower',
+              extent=[-0.5,Xmax-0.5,-0.5,Ymax-0.5])
 
     inc_dist = input("Enter incremental distance: ")
     max_dist = np.sqrt(Xmax**2 + Ymax**2)
@@ -68,7 +70,7 @@ def main():
             q_near = nearest_vertex(q_rand, tree, max_dist)
             # find point along the line from q_near to q_rand that is at most inc_dist away
             q_new = new_config(q_near, q_rand, inc_dist)
-            # # check to see if the new point collides with a circle
+            # # check to see if the new point collides with a colored pixel
             if no_collision(q_near, q_new, world):
                 collision = False
 
@@ -84,7 +86,7 @@ def main():
         ax.set_title('RRT ' + str(cntr) + ' Iterations')
         plt.draw()
         fig.canvas.flush_events()
-        time.sleep(0.05)
+        time.sleep(0.0005)
         if goal_reached:
             keep_iterating = False
 
@@ -130,23 +132,97 @@ def new_config(q_near, q_rand, inc_dist):
         q_new_y = q_near[1] + v_unit[1]*inc_dist
         return [int(round(q_new_x)), int(round(q_new_y))]
 
-def no_collision(q_near, q_new, world):
+def no_collision((x0, y0), (x1, y1), world):
+    # check if q_new is in a colored pixel or if the point already exists in the tree
+    if world[y1, x1] == 255 or (x0, y0) == (x1, y1):
+        return False
+    # check if the line to be drawn is vertical
+    elif (x1 - x0) == 0:
+        return plotLineVert(x0, y0, x1, y1, world)
+    # check if the line to be drawn is horizontal
+    elif (y1 - y0) == 0:
+        return plotLineHorz(x0, y0, x1, y1, world)
+    else:
+        # check if slope is less than +/-45 degrees steep
+        # (i.e. within Octants 0, 3, 4, and 7)
+        if abs(y1 - y0) < abs(x1 - x0):
+            # check if slope is within Octant 3 and 4.
+            # if yes, reverse start and end points so
+            # the slope is within Octant 0 and 7
+            if x0 > x1:
+                return plotLineLow(x1, y1, x0, y0, world)
+            else:
+                return plotLineLow(x0, y0, x1, y1, world)
+        # slope must be steeper than +/- 45 degrees
+        # (i.e. within Octants 1, 2, 5, and 6)
+        else:
+            # check if slope is within Octants 5 and 6.
+            # if yes, reverse start and end points so
+            # the slope is within Octants 1 and 2
+            if y0 > y1:
+                return plotLineHigh(x1, y1, x0, y0, world)
+            else:
+                return plotLineHigh(x0, y0, x1, y1, world)
 
-    if world[q_new[1], q_new[0]] == 255 or q_near[0] == q_new[0]:
-        return False
-    m = (q_new[1] - q_near[1]) / float(q_new[0] - q_near[0])
-    if m < -1 or m > 1:
-        return False
-    b = q_near[1] - m*q_near[0]
-    x_low = int(round(min(q_near[0], q_new[0])))
-    x_high = int(round(max(q_near[0], q_new[0])))
-    for i in range(x_low, x_high):
-        y = int(round(m*i + b))
-        if world[y, i] == 255:
+# draws lines using pixels for slopes in Octant 0 and 7
+def plotLineLow(x0, y0, x1, y1, world):
+    dx = x1 - x0
+    dy = y1 - y0
+    # the next two lines allow the function to handle Octant 7
+    yi = np.sign(dy)
+    dy = dy * yi
+    D = 2*dy - dx
+    y = y0
+
+    for x in range(x0, x1):
+        if world[y, x] == 255:
             return False
-
+        if D >= 0:
+            y = y + yi
+            D = D - 2*dx
+        D = D + 2*dy
     return True
 
+# draws lines using pixels for slopes in Octant 1 and 2
+def plotLineHigh(x0, y0, x1, y1, world):
+    dx = x1 - x0
+    dy = y1 - y0
+    # the next two lines allow the function to handle Octant 2
+    xi = np.sign(dx)
+    dx = dx * xi
+    D = 2*dx - dy
+    x = x0
+
+    for y in range(y0, y1):
+        if world[y, x] == 255:
+            return False
+        if D >= 0:
+            x = x + xi
+            D = D - 2*dy
+        D = D + 2*dx
+    return True
+
+# draws vertical lines using pixels
+def plotLineVert(x0, y0, x1, y1, world):
+    dy = y1 - y0
+    yi = np.sign(dy)
+    y = y0
+    while y != y1:
+        if world[y, x0] == 255:
+            return False
+        y = y + yi
+    return True
+
+# draws horizontal lines using pixels
+def plotLineHorz(x0, y0, x1, y1, world):
+    dx = x1 - x0
+    xi = np.sign(dx)
+    x = x0
+    while x != x1:
+        if world[y0, x] == 255:
+            return False
+        x = x + xi
+    return True
 
 def vacant_space(q_pnt, world):
     if world[q_pnt[1], q_pnt[0]] == 255:
