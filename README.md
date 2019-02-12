@@ -1,4 +1,4 @@
-# path_planning
+# Path Planning Using RRT
 
 Created by Solomon Wiznitzer for the Master of Science in Robotics program at Northwestern University.
 
