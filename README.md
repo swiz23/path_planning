@@ -17,10 +17,10 @@ To run any of the files, just type `python <file_name>` in the terminal. For *rr
 1. **map size:** this dictates the size of the world; for example, an entry of `100` will create a world that is 100x100.
 2. **x/y of q_init:** the initial root of the tree where the RRT algorithm will start exploring. The coordinate can be a 'float' or an 'integer'; for example, `50` and `32.3` are valid entries.
 3. **vertices:** the number of points that should be in the tree until the RRT algorithm stops exploring; for example, `200` works.
-4. **incremental distance:** the maximum length of a line that can be drawn from one vertex to the next. If the randomly generated point is further than this distance, then the line will be drawn with the length specified here, but in the direction of the randomly generated point. If the map size is 100x100, a value of `5` works pretty well.
+4. **incremental distance:** the maximum length of a line that can be drawn from one vertex to the next. If the randomly generated point is further than this distance, then the line will be drawn with the length specified here but in the direction of the randomly generated point. If the map size is 100x100, a value of `5` works pretty well.
 
 For *rrt_circles.py*, you will be prompted for the following new items:
 1. **algorithm type:** there are two values that can be entered - either `'custom'` or `'online'`. They both should work exactly the same. The 'custom' one finds the minimum distance between a point and a line following the logic shown [here](https://www.khanacademy.org/math/geometry-home/analytic-geometry-topic/distance-between-a-point-and-a-line/v/distance-between-a-point-and-a-line) while the 'online' one was implemented following the slightly obtuse instructions [here](http://paulbourke.net/geometry/pointlineplane/).
 2. **x/y of q_goal:** once the RRT finds an obstacle-free path to this point, the algorithm stops. The user should make sure to pick a point that does not coincide with an obstacle. This applies to **q_init** as well.
 
-Note that once the goal position is found, the path from **q_init** to **q_goal** will be highlighted in orange. Also, the prompts for *rrt_logo.py* have already been discussed in the above two scenarios.
+Note that once the goal position is found, the path from **q_init** to **q_goal** will be highlighted in orange. Note also that there are no new prompts for *rrt_logo.py* that have not already been discussed in the above two scenarios. However, in *rrt_logo.py*, **q_init** and **q_goal** should both be integers.
