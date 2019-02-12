@@ -12,7 +12,7 @@ import matplotlib.patches as patches
 # https://www.youtube.com/watch?v=76gp2IAazV4
 
 def main():
-    FNAME = "N_map.png"
+    FNAME = "../images/N_map.png"
     world = imread(FNAME, mode='L')
     world = np.flipud(world)
     world = np.invert(world)
@@ -29,7 +29,7 @@ def main():
 
     inc_dist = input("Enter incremental distance: ")
     max_dist = np.sqrt(Xmax**2 + Ymax**2)
-    np.random.seed(1)
+    # np.random.seed(1)
     plt.show(block=False)
 
     print("Look at plot to find an obstacle-free starting and ending position.")

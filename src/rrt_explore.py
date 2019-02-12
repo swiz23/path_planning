@@ -14,7 +14,7 @@ def main():
 
     q_init = [q_init_x, q_init_y]
     max_dist = map_size * np.sqrt(2)
-    np.random.seed(1)
+    # np.random.seed(1)
 
     tree = [q_init]
     verts = []

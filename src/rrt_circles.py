@@ -11,7 +11,7 @@ def main():
     alg = input("Enter algorithm ('custom'/'online'): ")
     world = generate_circles(10, .08*map_size, 0.03*map_size, map_size)
     max_dist = map_size * np.sqrt(2)
-    np.random.seed(1)
+    # np.random.seed(1)
 
     # make a plot and show circles
     fig = plt.figure()
@@ -207,7 +207,7 @@ def generate_circles(num, mean, std, map_size):
     circle radii and the second two columns are the circle x and y locations.
     """
     circles = np.zeros((num,3))
-    np.random.seed(1)
+    # np.random.seed(1)
     # generate circle locations using a uniform distribution:
     circles[:,1:] = np.random.uniform(mean, map_size-mean, size=(num,2))
     # generate radii using a normal distribution:
